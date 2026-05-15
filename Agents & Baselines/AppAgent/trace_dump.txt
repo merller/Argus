@@ -1,0 +1,6 @@
+=== files/appagent_guard/trace ===
+=== files/appagent_guard/trace_launcher.err ===
+/system/bin/strace: Unexpected wait status 0x1f
+=== files/appagent_guard/trace_status.log ===
+strace_exit=1
+=== files/appagent_guard/trace_stdout.log ===

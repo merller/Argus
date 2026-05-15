@@ -1,0 +1,44 @@
+MODEL: "OpenAI"  # The type of multi-modal LLM you would like to use to power the AppAgent, must be either OpenAI or Qwen
+
+OPENAI_API_BASE: "https://api.openai.com/v1/chat/completions"
+OPENAI_API_KEY: "sk-"  # Set the value to sk-xxx if you host the openai interface for open llm model
+OPENAI_API_MODEL: "gpt-4-vision-preview"  # The only OpenAI model by now that accepts visual input
+MAX_TOKENS: 300  # The max token limit for the response completion
+TEMPERATURE: 0.0  # The temperature of the model: the lower the value, the more consistent the output of the model
+REQUEST_INTERVAL: 10  # Time in seconds between consecutive GPT-4V requests
+
+DASHSCOPE_API_KEY: "sk-"  # The dashscope API key that gives you access to Qwen-VL model
+QWEN_MODEL: "qwen-vl-max"
+
+ADB_PATH: "adb"  # Set this to the full path of adb if adb is not in PATH on your server.
+ANDROID_SCREENSHOT_DIR: "/sdcard"  # Set the directory on your Android device to store the intermediate screenshots. Make sure the directory EXISTS on your phone!
+ANDROID_XML_DIR: "/sdcard"  # Set the directory on your Android device to store the intermediate XML files used for determining locations of UI elements on your screen. Make sure the directory EXISTS on your phone!
+
+DOC_REFINE: false  # Set this to true will make the agent refine existing documentation based on the latest demonstration; otherwise, the agent will not regenerate a new documentation for elements with the same resource ID.
+MAX_ROUNDS: 20  # Set the round limit for the agent to complete the task
+DARK_MODE: false  # Set this to true if your app is in dark mode to enhance the element labeling
+MIN_DIST: 30  # The minimum distance between elements to prevent overlapping during the labeling process
+
+GUARD_EXPORT_ENABLED: false  # Export the next action and screen context for an external guard evaluator.
+GUARD_EXPORT_DIR: "guard_inputs"  # The directory under each task folder to store exported guard input JSON files.
+GUARD_RUN_EXTERNAL: false  # Call an external Android guard script after exporting the guard input.
+GUARD_METHOD_NAME: ""  # Explicit defense: asb, delimiters, temporal_pusv, task_shield, agrail, kairos, agent_sentinel, or agentsight.
+GUARD_SCRIPT_PATH: ""  # Optional guard script. Leave empty to use android_guard_router.py for GUARD_METHOD_NAME.
+GUARD_PYTHON_EXEC: "python"  # Python executable used to run the external guard script.
+GUARD_RESULT_DIR: "guard_results"  # The directory under each task folder to store external guard outputs.
+GUARD_STOP_AFTER_EXPORT: false  # Stop AppAgent after exporting the current step, useful for manual evaluation.
+GUARD_RUN_AFTER_ACTION: false  # Run the external guard after the action executes. Useful for trace-based defenses such as Agent-Sentinel.
+GUARD_ALLOWED_PACKAGE: ""  # Optional package allowlist value passed to the external guard.
+GUARD_ALLOWED_ACTIVITY_PREFIX: ""  # Optional activity prefix passed to the external guard.
+GUARD_INCLUDE_SCREENSHOT: true  # Pass --include-screenshot when calling the external guard.
+
+DEVICE_TRACE_ENABLED: false  # Trace Android guest process syscalls on the emulator and attach them to guard input.
+DEVICE_TRACE_TOOL: "strace"  # Device-side syscall tracer available inside the emulator, for example strace or /data/local/tmp/strace.
+DEVICE_TRACE_FILTER: "fork,vfork,clone,clone3,execve,execveat,kill,exit,exit_group,open,openat,openat2,unlink,unlinkat,rename,renameat,renameat2,connect,listen,accept,accept4"  # Kernel syscalls captured inside Android.
+DEVICE_TRACE_STRING_SIZE: 256  # Maximum string size captured by the device-side tracer.
+DEVICE_TRACE_DIR_NAME: "syscall_traces"  # Directory under each task folder storing pulled syscall trace files.
+DEVICE_TRACE_REMOTE_DIR: "/data/local/tmp/appagent_guard"  # Directory inside the emulator used for temporary trace files.
+DEVICE_TRACE_USE_SU: true  # Use `su 0` when starting/stopping the device-side tracer.
+DEVICE_TRACE_STOP_DELAY: 1.0  # Seconds to keep tracing after an action returns, to capture resulting syscalls.
+DEVICE_TRACE_PACKAGES: ""  # Optional comma-separated extra packages to trace in addition to the current/target package.
+DEVICE_TRACE_INCLUDE_SYSTEMUI: false  # Also trace com.android.systemui when needed for system dialogs.
