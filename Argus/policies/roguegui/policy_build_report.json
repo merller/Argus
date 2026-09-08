@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "manifest": "github/Argus/policies/roguegui/roguegui_restricted_policy.json",
+  "manifest_sha256": "1f092644dd487e47fa8847553c76dbd046a6fcf5f1866a4dcb485a718c9b822f",
+  "evidence_apk_sha256": "f4407071aa53671ba01ca125e77dff02ca4f691e835cdc3d31fb05d7938184a5",
+  "dataset_cases": 73,
+  "category_counts": {
+    "Direct Prompt Injection": 15,
+    "GUI Hijacking": 10,
+    "Hallucination": 10,
+    "Temporal binding": 8,
+    "UI representation manipulation": 30
+  },
+  "dangerous_operation_rows": 91,
+  "benign_operation_rows": 18,
+  "dangerous_benign_dciplus_collisions": 0,
+  "cases_with_restricted_policy": 73,
+  "unique_restricted_dciplus_rules": 61,
+  "all_exact_rule_verdicts_restricted": true,
+  "default_verdict": "restricted",
+  "runtime_installation_claimed": false
+}

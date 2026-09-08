@@ -1,0 +1,105 @@
+diff --git a/core/java/android/view/AccessibilityInteractionController.java b/core/java/android/view/AccessibilityInteractionController.java
+--- a/core/java/android/view/AccessibilityInteractionController.java
++++ b/core/java/android/view/AccessibilityInteractionController.java
+@@ -823,6 +823,8 @@ public final class AccessibilityInteractionController {
+
+         args.recycle();
+
++        final AccessibilityClickMarker.SubjectScope argusScope =
++                AccessibilityClickMarker.beginAccessibilityDispatch(arguments);
+         boolean succeeded = false;
+         try {
+             if (mViewRootImpl.mView == null || mViewRootImpl.mAttachInfo == null ||
+@@ -849,6 +851,7 @@ public final class AccessibilityInteractionController {
+                 mA11yManager.notifyPerformingAction(0);
+             }
+         } finally {
++            AccessibilityClickMarker.popSubject(argusScope);
+             try {
+                 resetAccessibilityFetchFlags();
+                 callback.setPerformAccessibilityActionResult(succeeded, interactionId);
+diff --git a/services/accessibility/java/com/android/server/accessibility/AbstractAccessibilityServiceConnection.java b/services/accessibility/java/com/android/server/accessibility/AbstractAccessibilityServiceConnection.java
+--- a/services/accessibility/java/com/android/server/accessibility/AbstractAccessibilityServiceConnection.java
++++ b/services/accessibility/java/com/android/server/accessibility/AbstractAccessibilityServiceConnection.java
+@@ -2118,7 +2118,13 @@ abstract class AbstractAccessibilityServiceConnection extends IAccessibilityServ
+                         + ";" + callback + ";" + mFetchFlags + ";" + interrogatingPid + ";"
+                         + interrogatingTid);
+             }
++            final Bundle taggedArguments = arguments == null
++                    ? new Bundle() : new Bundle(arguments);
++            if (!ArgusAccessibilitySubject.attach(taggedArguments, interactionId,
++                    connection.getPid(), connection.getUid())) {
++                return false;
++            }
+             connection.getRemote().performAccessibilityAction(accessibilityNodeId, action,
+-                    arguments, interactionId, callback, fetchFlags, interrogatingPid,
++                    taggedArguments, interactionId, callback, fetchFlags, interrogatingPid,
+                     interrogatingTid);
+         } catch (RemoteException re) {
+diff --git a/services/accessibility/java/com/android/server/accessibility/AccessibilityWindowManager.java b/services/accessibility/java/com/android/server/accessibility/AccessibilityWindowManager.java
+--- a/services/accessibility/java/com/android/server/accessibility/AccessibilityWindowManager.java
++++ b/services/accessibility/java/com/android/server/accessibility/AccessibilityWindowManager.java
+@@ -1004,21 +1004,27 @@ public class AccessibilityWindowManager {
+     @VisibleForTesting(visibility = VisibleForTesting.Visibility.PACKAGE)
+     public final class RemoteAccessibilityConnection implements IBinder.DeathRecipient {
+         private final int mUid;
++        private final int mPid;
+         private final String mPackageName;
+         private final int mWindowId;
+         private final int mUserId;
+         private final IAccessibilityInteractionConnection mConnection;
+
+         RemoteAccessibilityConnection(int windowId,
+                 IAccessibilityInteractionConnection connection,
+-                String packageName, int uid, int userId) {
++                String packageName, int pid, int uid, int userId) {
+             mWindowId = windowId;
+             mPackageName = packageName;
++            mPid = pid;
+             mUid = uid;
+             mUserId = userId;
+             mConnection = connection;
+         }
+
++        int getPid() {
++            return mPid;
++        }
++
+         int getUid() {
+             return  mUid;
+         }
+@@ -1221,5 +1227,6 @@ public class AccessibilityWindowManager {
+             final int resolvedUserId = mSecurityPolicy
+                     .resolveCallingUserIdEnforcingPermissionsLocked(userId);
+             final int resolvedUid = UserHandle.getUid(resolvedUserId, UserHandle.getCallingAppId());
++            final int resolvedPid = Binder.getCallingPid();
+
+             // Makes sure the reported package is one the caller has access to.
+@@ -1233,6 +1240,7 @@ public class AccessibilityWindowManager {
+             // is shared across users.
+             if (mSecurityPolicy.isCallerInteractingAcrossUsers(userId)) {
+                 RemoteAccessibilityConnection wrapper = new RemoteAccessibilityConnection(
+-                        windowId, connection, packageName, resolvedUid, UserHandle.USER_ALL);
++                        windowId, connection, packageName, resolvedPid, resolvedUid,
++                        UserHandle.USER_ALL);
+                 wrapper.linkToDeath();
+                 mGlobalInteractionConnections.put(windowId, wrapper);
+@@ -1244,6 +1252,7 @@ public class AccessibilityWindowManager {
+                 }
+             } else {
+                 RemoteAccessibilityConnection wrapper = new RemoteAccessibilityConnection(
+-                        windowId, connection, packageName, resolvedUid, resolvedUserId);
++                        windowId, connection, packageName, resolvedPid, resolvedUid,
++                        resolvedUserId);
+                 wrapper.linkToDeath();
+                 getInteractionConnectionsForUserLocked(resolvedUserId).put(windowId, wrapper);
+@@ -1840,7 +1849,8 @@ public class AccessibilityWindowManager {
+             }
+             if (connection != null) {
+                 RemoteAccessibilityConnection wrapper = new RemoteAccessibilityConnection(
+                         AccessibilityWindowInfo.PICTURE_IN_PICTURE_ACTION_REPLACER_WINDOW_ID,
+-                        connection, "foo.bar.baz", Process.SYSTEM_UID, UserHandle.USER_ALL);
++                        connection, "foo.bar.baz", Binder.getCallingPid(), Process.SYSTEM_UID,
++                        UserHandle.USER_ALL);
+                 mPictureInPictureActionReplacingConnection = wrapper;
+                 wrapper.linkToDeath();
